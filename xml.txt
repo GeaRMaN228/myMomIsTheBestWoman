@@ -1,0 +1,260 @@
+using System.IO;
+using System.Xml.Serialization;
+using System.Text.Encodings.Web;
+
+public interface IChessPiece
+{
+    void Move(int newX, int newY);
+    void Display();
+}
+
+
+[XmlRoot("ChessPieces")]
+public class ChessPiecesStorage
+{
+    [XmlArray("Pieces")]
+    [XmlArrayItem("Pawn", Type = typeof(Pawn))]
+    [XmlArrayItem("Bishop", Type = typeof(Bishop))]
+    [XmlArrayItem("Rook", Type = typeof(Rook))]
+    [XmlArrayItem("King", Type = typeof(King))]
+    public List<ChessPiece> Pieces { get; set; } = new List<ChessPiece>();
+}
+
+[XmlInclude(typeof(Pawn))]
+[XmlInclude(typeof(Bishop))]
+[XmlInclude(typeof(Rook))]
+[XmlInclude(typeof(King))]
+public abstract class ChessPiece : IChessPiece
+{
+    [XmlElement("Name")]
+    public string Name { get; set; }
+
+    [XmlElement("Color")]
+    public string Color { get; set; }
+
+    [XmlElement("X")]
+    public int X { get; set; }
+
+    [XmlElement("Y")]
+    public int Y { get; set; }
+
+    protected ChessPiece() { }
+
+    protected ChessPiece(string name, string color, int x, int y)
+    {
+        Name = name;
+        Color = color;
+        X = x;
+        Y = y;
+    }
+
+    public abstract void Move(int newX, int newY);
+
+    public virtual void Display()
+    {
+        Console.WriteLine($"Имя: {Name}, Цвет: {Color}, Позиция: ({X}, {Y})");
+    }
+}
+
+public class Program
+{
+    static void Main()
+    {
+        const string filePath = "chess_pieces.xml";
+        
+        try
+        {
+            InitializeFile(filePath);
+
+            var pieces = new ChessPiecesStorage
+            {
+                Pieces =
+                {
+                    new Pawn("белый", 1, 2),
+                    new Bishop("чёрный", 3, 1),
+                    new Rook("белый", 1, 1),
+                    new King("чёрный", 5, 1)
+                }
+            };
+
+            Console.Write("Выберите цвет новой пешки (чёрный/белый): ");
+            string? color = Console.ReadLine();
+            pieces.Pieces.Add(new Pawn(color, 2, 2));
+
+            // ... остальной код перемещения фигур ...
+
+            SavePieces(filePath, pieces);
+            Console.WriteLine($"Данные сохранены в файл: {Path.GetFullPath(filePath)}");
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+    }
+
+    static void InitializeFile(string filePath)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка инициализации файла: {ex.Message}");
+            throw;
+        }
+    }
+
+    static void SavePieces(string filePath, ChessPiecesStorage storage)
+    {
+        try
+        {
+            var serializer = new XmlSerializer(typeof(ChessPiecesStorage));
+            using var writer = new StreamWriter(filePath);
+            serializer.Serialize(writer, storage);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка сохранения: {ex.Message}");
+            throw;
+        }
+    }
+
+    static ChessPiecesStorage LoadPieces(string filePath)
+    {
+        try
+        {
+            if (!File.Exists(filePath)) return new ChessPiecesStorage();
+            
+            var serializer = new XmlSerializer(typeof(ChessPiecesStorage));
+            using var reader = new StreamReader(filePath);
+            return (ChessPiecesStorage)serializer.Deserialize(reader);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки: {ex.Message}");
+            return new ChessPiecesStorage();
+        }
+    }
+}
+
+public class Pawn : ChessPiece
+{
+    public bool IsPromoted { get; set; }
+
+    public Pawn() { }
+
+    public Pawn(string color, int x, int y) 
+        : base("Пешка", color, x, y)
+    {
+        IsPromoted = false;
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Пешка передвинулась с ({X},{Y}) на ({newX},{newY})");
+        X = newX;
+        Y = newY;
+    }
+
+    public void Promote()
+    {
+        IsPromoted = true;
+        Console.WriteLine("Пешка повышена в звании!");
+    }
+}
+
+public class Bishop : ChessPiece
+{
+    public int DiagonalMoves { get; set; }
+
+    public Bishop() { }
+
+    public Bishop(string color, int x, int y) 
+        : base("Слон", color, x, y)
+    {
+        DiagonalMoves = 0;
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Слон ходит по диагонали из ({X},{Y}) в ({newX},{newY})");
+        X = newX;
+        Y = newY;
+        DiagonalMoves++;
+    }
+}
+
+public class Rook : ChessPiece
+{
+    public bool CastlingAvailable { get; set; }
+
+    public Rook() { }
+
+    public Rook(string color, int x, int y) 
+        : base("Ладья", color, x, y)
+    {
+        CastlingAvailable = true;
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Ладья перемещается прямо из ({X},{Y}) в ({newX},{newY})");
+        X = newX;
+        Y = newY;
+        CastlingAvailable = false;
+    }
+
+    public void CastlingMove()
+    {
+        if (CastlingAvailable)
+        {
+            Console.WriteLine("Ладья участвует в рокировке");
+            CastlingAvailable = false;
+        }
+        else
+        {
+            Console.WriteLine("Рокировка больше не доступна для этой ладьи");
+        }
+    }
+}
+
+public class King : ChessPiece
+{
+    public bool InCheck { get; set; }
+
+    public King() { }
+
+    public King(string color, int x, int y) 
+        : base("Король", color, x, y)
+    {
+        InCheck = false;
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Король перемещается на одну клетку из ({X},{Y}) в ({newX},{newY})");
+        X = newX;
+        Y = newY;
+    }
+
+    public void Castling(Rook rook)
+    {
+        if (!InCheck && rook.CastlingAvailable)
+        {
+            Console.WriteLine("Рокировка, произведенная между королем и ладьей");
+            rook.CastlingMove();
+        }
+        else
+        {
+            Console.WriteLine("Рокировка не возможна");
+        }
+    }
+
+    public void SetInCheck(bool check)
+    {
+        InCheck = check;
+    }
+}
