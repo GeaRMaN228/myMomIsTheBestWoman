@@ -1,0 +1,350 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+
+namespace SeriesCalculation
+{
+    public partial class MainForm : Form
+    {
+        private List<Znak> znakList = new List<Znak>();
+        private DataGridView dataGridView1;
+        private TextBox textBox1;
+        private Button button1;
+        private Button button2;
+        private Button button3;
+        private Button button4;
+        private Button button5;
+
+        public MainForm()
+        {
+            InitializeComponent();
+        }
+        public class Znak
+        {
+            public string Фамилия { get; set; }
+            public string Имя { get; set; }
+            public DateTime ДатаРождения { get; set; }
+            public string ЗнакЗодиака { get; set; }
+        }
+
+        private void InitializeComponent()
+        {
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Location = new System.Drawing.Point(12, 12);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.Size = new System.Drawing.Size(510, 254);
+            this.dataGridView1.TabIndex = 0;
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(12, 272);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(407, 20);
+            this.textBox1.TabIndex = 1;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(12, 298);
+            this.button1.Name = "generate";
+            this.button1.Size = new System.Drawing.Size(123, 31);
+            this.button1.TabIndex = 2;
+            this.button1.Text = "Генерация";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.BtnGenerate_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(141, 298);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(123, 31);
+            this.button2.TabIndex = 3;
+            this.button2.Text = "Сохранить";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.BtnSave_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(270, 298);
+            this.button3.Name = "load";
+            this.button3.Size = new System.Drawing.Size(123, 31);
+            this.button3.TabIndex = 4;
+            this.button3.Text = "Загрузить";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.BtnLoad_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(399, 298);
+            this.button4.Name = "Clear";
+            this.button4.Size = new System.Drawing.Size(123, 31);
+            this.button4.TabIndex = 5;
+            this.button4.Text = "Очистить";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.BtnClear_Click);
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(426, 272);
+            this.button5.Name = "Search";
+            this.button5.Size = new System.Drawing.Size(96, 23);
+            this.button5.TabIndex = 6;
+            this.button5.Text = "Поиск";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.BtnSearch_Click);
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(537, 335);
+            this.Controls.Add(this.button5);
+            this.Controls.Add(this.button4);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.button1);
+            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.dataGridView1);
+            this.Name = "Form1";
+            this.Text = "ZNAK";
+            
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        private void BtnGenerate_Click(object sender, EventArgs e)
+        {
+            GenerateData();
+        }
+
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveDialog = new SaveFileDialog();
+            saveDialog.Filter = "Текстовые файлы (*.txt)|*.txt";
+            if (saveDialog.ShowDialog() == DialogResult.OK)
+            {
+                SaveToFile(saveDialog.FileName);
+            }
+        }
+
+        private void BtnLoad_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openDialog = new OpenFileDialog();
+            openDialog.Filter = "Текстовые файлы (*.txt)|*.txt";
+            if (openDialog.ShowDialog() == DialogResult.OK)
+            {
+                LoadFromFile(openDialog.FileName);
+            }
+        }
+
+        private void BtnSearch_Click(object sender, EventArgs e)
+        {
+            string lastName = textBox1.Text.Trim();
+            if (!string.IsNullOrEmpty(lastName))
+            {
+                SearchByLastName(lastName);
+            }
+            else
+            {
+                MessageBox.Show("Введите фамилию для поиска.", "Ошибка");
+            }
+        }
+
+        private void BtnClear_Click(object sender, EventArgs e)
+        {
+            znakList.Clear();
+            dataGridView1.DataSource = null;
+        }
+        private void SaveToFile(string filename)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(filename))
+                {
+                    foreach (var znak in znakList)
+                    {
+                        writer.WriteLine($"{znak.Фамилия},{znak.Имя},{znak.ДатаРождения:dd.MM.yyyy},{znak.ЗнакЗодиака}");
+                    }
+                }
+                MessageBox.Show("Данные сохранены успешно.", "Информация");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении: {ex.Message}", "Ошибка");
+            }
+        }
+        private void LoadFromFile(string filename)
+        {
+            try
+            {
+                znakList.Clear();
+                using (StreamReader reader = new StreamReader(filename))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        string[] parts = line.Split(',');
+                        if (parts.Length == 4)
+                        {
+                            if (DateTime.TryParseExact(parts[2], "dd.MM.yyyy", null,
+                                System.Globalization.DateTimeStyles.None, out DateTime ДатаРождения))
+                            {
+                                znakList.Add(new Znak
+                                {
+                                    Фамилия = parts[0],
+                                    Имя = parts[1],
+                                    ДатаРождения = ДатаРождения,
+                                    ЗнакЗодиака = parts[3]
+                                });
+                            }
+                        }
+                    }
+                }
+
+                znakList = znakList.OrderBy(z => z.ДатаРождения).ToList();
+                UpdateDataGridView();
+                MessageBox.Show("Данные загружены успешно.", "Информация");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке: {ex.Message}", "Ошибка");
+            }
+        }
+        private void SearchByLastName(string lastName)
+        {
+            var results = znakList.Where(z => z.Фамилия.Equals(lastName, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (results.Count > 0)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (var znak in results)
+                {
+                    sb.AppendLine($"Фамилия: {znak.Фамилия}\nИмя: {znak.Имя}\n" +
+                                  $"Дата рождения: {znak.ДатаРождения:dd.MM.yyyy}\nЗнак: {znak.ЗнакЗодиака}\n");
+                }
+                MessageBox.Show(sb.ToString(), "Результаты поиска");
+            }
+            else
+            {
+                MessageBox.Show("Людей с такой фамилией не найдено.", "Информация");
+            }
+        }
+
+        private void GenerateData()
+        {
+            znakList.Clear();
+            var names = new List<string>
+            {
+                "Садова Екатерина",
+                "Сармин Сергей",
+                "Нова Никита",
+                "Стареев Егор",
+                "Кашлыева Доланна",
+                "Абдуллаев Маганец",
+                "Абрамов Умаркоджа",
+                "Двое Александр",
+                "Михайлов Александр",
+                "Валькевич Павел",
+                "Петрова Екатерина",
+                "Шереф Роман",
+                "Китрявенко Александр",
+                "Кислеев Вадим",
+                "Кузян Алексей",
+                "Львов Матвей",
+                "Букреев Максим",
+                "Губерт Сергей"
+            };
+
+            Random rand = new Random();
+            for (int i = 0; i < 10; i++)
+            {
+                string fullName = names[rand.Next(names.Count)];
+                string[] parts = fullName.Split(new[] { ' ' }, 3);
+                string lastName = parts[0];
+                string Имя = parts.Length > 1 ? parts[1] : "";
+
+                DateTime ДатаРождения;
+                do
+                {
+                    int year = rand.Next(1900, 2025);
+                    int month = rand.Next(1, 13);
+                    int day = rand.Next(1, 32);
+                    try
+                    {
+                        ДатаРождения = new DateTime(year, month, day);
+                    }
+                    catch
+                    {
+                        ДатаРождения = DateTime.MinValue;
+                    }
+                } while (ДатаРождения == DateTime.MinValue);
+
+                string ЗнакЗодиака = GetЗнакЗодиака(ДатаРождения);
+
+                znakList.Add(new Znak
+                {
+                    Фамилия = lastName,
+                    Имя = Имя,
+                    ДатаРождения = ДатаРождения,
+                    ЗнакЗодиака = ЗнакЗодиака
+                });
+            }
+
+            znakList = znakList.OrderBy(z => z.ДатаРождения).ToList();
+            UpdateDataGridView();
+        }
+        private void UpdateDataGridView()
+        {
+            dataGridView1.DataSource = null;
+            dataGridView1.DataSource = znakList;
+            dataGridView1.Columns["ДатаРождения"].DefaultCellStyle.Format = "dd.MM.yyyy";
+        }
+
+        private string GetЗнакЗодиака(DateTime date)
+        {
+            int month = date.Month;
+            int day = date.Day;
+
+            switch (month)
+            {
+                case 1: return day <= 20 ? "Козерог" : "Водолей";
+                case 2: return day <= 18 ? "Водолей" : "Рыбы";
+                case 3: return day <= 20 ? "Рыбы" : "Овен";
+                case 4: return day <= 20 ? "Овен" : "Телец";
+                case 5: return day <= 21 ? "Телец" : "Близнецы";
+                case 6: return day <= 21 ? "Близнецы" : "Рак";
+                case 7: return day <= 22 ? "Рак" : "Лев";
+                case 8: return day <= 23 ? "Лев" : "Дева";
+                case 9: return day <= 23 ? "Дева" : "Весы";
+                case 10: return day <= 23 ? "Весы" : "Скорпион";
+                case 11: return day <= 22 ? "Скорпион" : "Стрелец";
+                case 12: return day <= 21 ? "Стрелец" : "Козерог";
+                default: return "";
+            }
+        }
+
+
+        [STAThread]
+        public static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new MainForm());
+        }
+    }
+}
