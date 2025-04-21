@@ -1,0 +1,231 @@
+try
+{
+    Pawn pawn = new Pawn("белый", 1, 2);
+    Bishop bishop = new Bishop("чёрный", 3, 1);
+    Rook rook = new Rook("белый", 1, 1);
+    King king = new King("чёрный", 5, 1);
+
+    List<ChessPiece> pieces = new List<ChessPiece>
+    {
+        pawn,
+        bishop,
+        rook,
+        king
+    };
+
+    Console.Write("Выберите цвет новой пешки (чёрный/белый): ");
+    string? color = Console.ReadLine();
+    Pawn newPawn = new Pawn(color, 2, 2);
+    pieces.Add(newPawn);
+
+    foreach (var piece in pieces)
+    {
+        piece.Display();
+        if(piece.Name == "Пешка"||piece.Name == "Ладья")
+        {
+            piece.Move(piece.X, piece.Y + 1);
+        }
+        else
+        {
+            piece.Move(piece.X + 1, piece.Y + 1);
+        }
+
+        Console.WriteLine();
+    }
+
+    if (pawn is Pawn p) p.Promote();
+    king.Castling(rook);
+    king.SetInCheck(true);
+    king.Castling(rook); //Теперь рокировка невозможна
+}
+catch(Exception err)
+{
+    Console.WriteLine(err);
+}
+//#########################################################################################
+public interface IChessPiece
+{
+    void Move(int newX, int newY);
+    void Display();
+}
+
+public abstract class ChessPiece : IChessPiece
+{
+    public string Name { get; protected set; }
+    public string Color { get; protected set; }
+    public int X { get; protected set; }
+    public int Y { get; protected set; }
+
+    protected ChessPiece(string name, string color, int x, int y)
+    {
+        Name = name;
+        Color = color;
+        X = x;
+        Y = y;
+    }
+
+    ~ChessPiece()
+    {
+        Console.WriteLine($"Дестректор для {Name} вызван");
+    }
+
+    public abstract void Move(int newX, int newY);
+
+    public virtual void Display()
+    {
+        Console.WriteLine($"Имя: {Name}, Цвет: {Color}, Позиция: ({X}, {Y})");
+    }
+}
+
+public abstract class LightPiece : ChessPiece
+{
+    protected LightPiece(string name, string color, int x, int y) 
+        : base(name, color, x, y){}
+
+    ~LightPiece()
+    {
+        Console.WriteLine($"Лёгкая фигура {Name} была удалена");
+    }
+}
+
+public abstract class HeavyPiece : ChessPiece
+{
+    protected HeavyPiece(string name, string color, int x, int y) 
+        : base(name, color, x, y){}
+
+    ~HeavyPiece()
+    {
+        Console.WriteLine($"Тяжёлая фигура {Name} была удалена");
+    }
+}
+
+public class Pawn : ChessPiece
+{
+    public bool IsPromoted { get; private set; }
+
+    public Pawn(string color, int x, int y) 
+        : base("Пешка", color, x, y)
+    {
+        IsPromoted = false;
+    }
+
+    ~Pawn()
+    {
+        Console.WriteLine("Пешка удалена");
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Пешка передвинулась с ({X},{Y}) на ({newX},{newY})");
+        X = newX;
+        Y = newY;
+    }
+
+    public void Promote()
+    {
+        IsPromoted = true;
+        Console.WriteLine("Пешка повышена в звании!");
+    }
+}
+
+public class Bishop : LightPiece
+{
+    public int DiagonalMoves { get; private set; }
+
+    public Bishop(string color, int x, int y) 
+        : base("Слон", color, x, y)
+    {
+        DiagonalMoves = 0;
+    }
+
+    ~Bishop()
+    {
+        Console.WriteLine("Слон удалён");
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Слон ходит по диагонали из ({X},{Y}) в ({newX},{newY})");
+        X = newX;
+        Y = newY;
+        DiagonalMoves++;
+    }
+}
+
+public class Rook : HeavyPiece
+{
+    public bool CastlingAvailable { get; private set; }
+
+    public Rook(string color, int x, int y) 
+        : base("Ладья", color, x, y)
+    {
+        CastlingAvailable = true;
+    }
+
+    ~Rook()
+    {
+        Console.WriteLine("Ладья удалена");
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Ладья перемещается прямо из ({X},{Y}) в ({newX},{newY})");
+        X = newX;
+        Y = newY;
+        CastlingAvailable = false;
+    }
+
+    public void CastlingMove()
+    {
+        if (CastlingAvailable)
+        {
+            Console.WriteLine("Ладья участвует в рокировке");
+            CastlingAvailable = false;
+        }
+        else
+        {
+            Console.WriteLine("Рокировка больше не доступна для этой ладьи");
+        }
+    }
+}
+
+public class King : ChessPiece
+{
+    public bool InCheck { get; private set; }
+
+    public King(string color, int x, int y) 
+        : base("Король", color, x, y)
+    {
+        InCheck = false;
+    }
+
+    ~King()
+    {
+        Console.WriteLine("Король удалён");
+    }
+
+    public override void Move(int newX, int newY)
+    {
+        Console.WriteLine($"Король перемещается на одну клетку из ({X},{Y}) в ({newX},{newY})");
+        X = newX;
+        Y = newY;
+    }
+
+    public void Castling(Rook rook)
+    {
+        if (!InCheck && rook.CastlingAvailable)
+        {
+            Console.WriteLine("Рокировка, произведенная между королем и ладьей");
+            rook.CastlingMove();
+        }
+        else
+        {
+            Console.WriteLine("Рокировка не возможна");
+        }
+    }
+
+    public void SetInCheck(bool check)
+    {
+        InCheck = check;
+    }
+}
