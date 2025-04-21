@@ -1,0 +1,19 @@
+char[] letters = File.ReadAllText("text.txt").ToArray();
+
+var alphabet = new Dictionary<char, int>(33);
+
+foreach (char letter in letters)
+{
+    if(!alphabet.ContainsKey(char.ToLower(letter)) && char.IsLetter(letter))
+    {
+        alphabet.Add(char.ToLower(letter), 0);
+    }
+    if(char.IsLetter(letter))
+    {
+        alphabet[char.ToLower(letter)] ++;
+    }
+}
+foreach(var sym in alphabet)
+{
+    Console.WriteLine($"Букв \'{sym.Key}\' в тексте {sym.Value} ");
+}
